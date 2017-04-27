@@ -236,7 +236,7 @@ $brown-border: 3px solid brown;
     font : {
       size: 40px;
       family: cursive;
-    }
+    }r
     @include text_components($underlined);
   }
   .blob_2 {
