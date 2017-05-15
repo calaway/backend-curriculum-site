@@ -431,6 +431,30 @@ end
 
 Run the tests and we should have 3 passing tests.
 
+### Hitting our API endpoint in development
+
+This one is going to be a bit trickier to hit in dev, because a browser is only going to send GET requests and we need to send a POST request. An awesome free tool to do this with is [Postman](https://www.getpostman.com/). Either download the desktop version or just the Chrome extension and fire it up. It may look like you need to create an account to use it, but you can just skip that part.
+
+To make sure Postman is working correctly, let's first try the two endpoints that we already confirmed via the browser. Make sure your Rails server is still running in your terminal.
+GET http://localhost:3000/api/v1/items
+GET http://localhost:3000/api/v1/items/1
+
+If those work then let's try the new endpoint:
+POST http://localhost:3000/api/v1/items
+
+If you try it without specifying params then you'll create an item with a null name and description
+```json
+{
+  "id": 4,
+  "name": null,
+  "description": null,
+}
+```
+
+Luckily, Postman makes it super simple to add parameters. Just hit the parameters button and add key-value pairs of `name: your item name` and `description: your item description`. Notice what it does to the URL as you type them in. Hit send and it will create the new item and show you the newly created item.
+
+Question: Why does it show you the new item when you submit it?
+
 ## 6. Controller#Action - Api::V1::ItemsController#update
 
 Like before, let's add a test.
@@ -476,6 +500,10 @@ def update
 end
 ```
 
+### Hitting our API endpoint in development
+
+Can you hit our update endpoint in Postman? What HTTP verb do you need to specify? What URL do you point it at? What params do you need to send with it?
+
 ## 7. Controller#Action - Api::V1::ItemsController#destroy
 
 Ok, last endpoint to test and implement: destroy!
@@ -518,6 +546,10 @@ def destroy
   Item.destroy(params[:id])
 end
 ```
+
+### Hitting our API endpoint in development
+
+Now try deleting one of your dev environment items via our API with Postman. What HTTP verb do you need to specify? What URL do you point it at? What params do you need to send with it?
 
 Pat yourself on the back. You just built an API. And with TDD. Huzzah! Now go call a friend and tell them how cool you are.
 
