@@ -6,190 +6,194 @@ length: 90
 tags: apis, testing, requests, rails
 ---
 
+### Install Rails
+
+Rails can take a while to install, so if you haven't already let's get this going first.
+
+```sh
+$ gem install rails
+```
+
+You can confirm it installed correctly by running
+
+```sh
+$ rails --version
+```
+
+If the output is something like `Rails 5.x.x` then you're good to go.
+
 ## Learning Goals
 
 * Understand how an internal API works at a conceptual level
-* Use request specs to cover an internal API
+  * Q: What is an API in the context of web development?
+    * A: At the most basic level an API wraps a database and provides it's users to interface with the database via HTTP requests
+  * Q: Why might we decide to expose information in a database we control through an API?
+    * A: To save the user the headache of making database calls directly
+* Understand what it means to build a CRUD app and why that is significant
+* Understand the 7 restful routes and the 5 we will use to build an API
+  * Write out the [7 restful routes](http://guides.rubyonrails.org/routing.html#crud-verbs-and-actions) and discuss the relationship with CRUD
+* Understand the MVC Architecture and why we don't need the View component in an API
+* Build our app via test driven development (TDD), by creating request specs to cover an internal API
 * Feel comfortable writing request specs that deal with different HTTP verbs (GET, POST, PUT, DELETE)
+  * Q: What do we need to test in an API?
+    * A: We need one test for each API endpoint we expose to the users
 
-## Warmup
+## Warmup with a 10 minute blog
 
-* What is an API in the context of web development?
-* Why might we decide to expose information in a database we control through an API?
-* Why might we create an API *not* to be consumed by others?
-* What do we need to test in an API?
-* How will our tests be different from feature tests we have implemented in the past?
+An API is a specific type of web app. So before we jump in let's witness the magic of Rails by building a standard web app in the form of a blog. We'll loosely follow the official Rails documentation on creating a new rails project [here](http://guides.rubyonrails.org/v3.2.8/getting_started.html#creating-a-new-rails-project).
 
-## Overview
+We start by creating a new Rails app, changing directories into the project, and initializing the database for the app.
 
-* Review of New Tools
-* RSpec & Factory Girl Setup
-* Creating Our First Test and Factory
+```sh
+$ rails new blog -T -d postgresql
+$ cd blog
+$ rails db:create
+```
+
+Now we can really lean into the magic of rails by using its scaffold generator to build a CRUD app where the resource is a blog post. Following that we will send the command to add our blog posts table to our database.
+
+```sh
+$ rails generate scaffold Post name:string title:string content:text
+$ rails db:migrate
+```
+
+Rails scaffolding generator is the cheater's way to have Rails build out all 7 restful routes in a CRUD app with that one command. Let's run `$ rails routes` to see what pages it generated for us. To see them in a browser you'll want to spin up the Rails server with the command `$ rails server`. This will start our app on `http://localhost:3000`. To see our blog navigate to the url [http://localhost:3000/posts](http://localhost:3000/posts). Go ahead and play around with it by creating a new post or two, viewing them, editing one, and deleting one.
+
+That's it! You have a new blog!
+
+Now change directories out of this project, delete it if you like and let's get started on our API.
+
+## Procedure
+
+### Overview
+
+By the time we finish we will have written a test for each of the 5 restul routes that apply to an API and well have built out the 5 endpoints to make each test pass. Our endpoints will be:
+
 * Api::V1::ItemsController#index
 * Api::V1::ItemsController#show
 * Api::V1::ItemsController#create
 * Api::V1::ItemsController#update
 * Api::V1::ItemsController#destroy
 
-[Slides](../slides/building_an_internal_api)
-
-## New Tools
-
-### Testing
+### Testing Tools
 
 * `get 'api/v1/items'`: submits a get request to your application
 * `response`: captures the response to a given request
 * `JSON.parse(response)`: parses a JSON response
 
-### Controller
+### Controller Tools
 
 * `render`: tells your controller what to render as a response
 * `json: Item.all`: hash argument for render - converts Item.all to valid JSON
 
-## Procedure
-
-### 0. RSpec & Factory Girl Setup
+### 0. RSpec Setup
 
 Let's start by creating a new Rails project. If you are creating an api only Rails project, you can append `--api` to your rails new line in the command line.
-Read [section 3 of the docs](http://edgeguides.rubyonrails.org/api_app.html) to see how an api-only rails project is configured.
+Read [section 3 of the docs](http://edgeguides.rubyonrails.org/api_app.html) if you want to see how an api-only rails project is configured.
 
 ```sh
-$ rails new building_internal_apis -T -d postgresql --api
-$ cd building_internal_apis
-$ bundle
-$ bundle exec rake db:create
+$ rails new my_api -T -d postgresql --api
+$ cd my_api
+$ rails db:create
 ```
 
-Add `gem 'rspec-rails` to your Gemfile.
+Add `gem 'rspec-rails'` & `gem 'pry-rails'` to your Gemfile within `group :development, :test`, then bundle and generate the basic RSpec setup.
 
 ```sh
 $ bundle
 $ rails g rspec:install
 ```
 
-Now let's get our factories set up!
-
-add `gem 'factory_girl_rails'` to your :development, :test block in your Gemfile.
-
-```sh
-$ bundle
-$ mkdir spec/support/
-$ touch spec/support/factory_girl.rb
-```
-
-Inside of the factory_girl.rb file:
-
-```ruby
-RSpec.configure do |config|
-  config.include FactoryGirl::Syntax::Methods
-end
-```
-
-Inside of the rails_helper.rb file:
-
-```ruby
-require 'support/factory_girl'
-```
-
 ### 1. Creating Our First Test
 
-Now that our configuration is set up, we can start test driving our code. First, let's set up the test file.
-In true TDD form, we need to create the structure of the test folders ourselves. Even though we are going to be creating controller files for
-our api, users are going to be sending HTTP requests to our app. For this reason, we are going to call these specs `requests` instead of
-`controller specs`. Let's create our folder structure.
+Now that our configuration is set up, we can start test driving our code. First, let's set up the test file. In true TDD form, we need to create the structure of the test folders ourselves. Even though we are going to be creating controller files for our api, users are going to be sending HTTP requests to our app. For this reason, we are going to call these specs `requests` instead of `controller specs`. Let's create our folder structure.
 
 ```sh
 $ mkdir -p spec/requests/api/v1
 $ touch spec/requests/api/v1/items_request_spec.rb
 ```
 
-Note that we are namespacing under `/api/v1`. This is how we are going to namespace our controllers, so we want to do the same in our tests.
+Note that we are namespacing under `/api/v1`, which is a best practice when creating an API because it leave us room to add later versions on our API while keeping the initial version intact. This is how we are going to namespace our controllers, so we want to do the same in our tests.
 
-On the first line of our test, we want to set up our data. We configured Factory Girl so let's have it generate some items for us.
-We then want to make the request that a user would be making. We want a `get` request to `api/v1/items` and we would like to get
-json back. At the end of the test we want to assert that the response was a success.
+Note also that we are deciding to use 'items' as the resource that our API is serving up. You can really use any noun that would make sense to store in a database, e.g. users, photos, blog posts, restaurant reviews, et cetera.
 
-**spec/requests/api/v1/items_request_spec.rb**
+On the first line of our test, we want to set up our data. We'll create a few items in our database that we can then request back via our API. We then want to make the request that a user would be making. We want a `get` request to `api/v1/items` and we would like to get json back. At the end of the test we want to assert that the response was a success.
 
 ```rb
+# spec/requests/api/v1/items_request_specs_spec.rb
 require 'rails_helper'
 
-describe "Items API" do
-  it "sends a list of items" do
-    create_list(:item, 3)
+RSpec.describe "Items API", type: :request do
+  it "index: returns a list of all items" do
+    3.times do |n|
+      Item.create(name: "Item_#{n}", description: "Description of item #{n}")
+    end
 
     get '/api/v1/items'
 
-    expect(response).to be_success
+    expect(response).to have_http_status(200)
   end
 end
 ```
+
+This is a very basic test, that only tests that we get something/anything back from the API call. Well fill in the test more when this part is passing.
 
 ### 2. Creating Our First Model, Migration, and Factory
 
 Let's make the test pass!
 
-The first error that we should receive is
+When we run the command `$ rspec` the first error that we should receive is
 
 ```sh
-Failure/Error: create_list(:item, 3) ArgumentError: Factory not registered: item
+Failure/Error: Item.create(name: "Item_#{n}", description: "Description of item #{n}")
+NameError: uninitialized constant Item
 ```
 
-This is because we have not created a factory yet. The easiest way to create a factory is to generate the model.
+This is because we have not created a our Item model yet. Rails gives us a generator to create the migration that we'll use to add the model table to the database.
 
 Let's generate a model.
 
 ```sh
-$ rails g model Item name description:text
+$ rails g model Item name:string description:text
 ```
 
-Notice that not only was the Item model created, but a factory was created for the item in
-`spec/factories/items.rb`
+Take a look at the output of this command to see what the generator created for us. We should have a migration, a model, and a spec for the model. In our case we're testing it via our items_request_spec, so you can delete the model spec with `$ rm spec/models/item_spec.rb`.
 
 Now let's migrate!
 
 ```sh
-$ bundle exec rake db:migrate
+$ rails db:migrate
 == 20160229180616 CreateItems: migrating ======================================
 -- create_table(:items)
    -> 0.0412s
 == 20160229180616 CreateItems: migrated (0.0413s) =============================
 ```
 
-Before we run our test again, let's take a look at the Item Factory that was generated for us.
-
-**spec/factories/items.rb**
-
-```rb
-FactoryGirl.define do
-  factory :item do
-    name "MyString"
-    description "MyText"
-  end
-end
-```
-
-We can see that the attributes are created with auto-populated data using `My` and the attribute data type.
-This is boring. Let's change it to reflect a real item.
-
-**spec/factories/items.rb**
-
-```rb
-FactoryGirl.define do
-  factory :item do
-    name "Screwdriver"
-    description "Not just for breakfast anymore."
-  end
-end
-```
-
 ### 3. Api::V1::ItemsController#index
 
-We're TDD'ing so let's run our tests again.
+The rule with TDD is to make the smallest change that will fix the current error and then run the tests again ... rince and repeat. So let's run `$ rspec` again.
 
 We should get the error `ActionController::RoutingError: No route matches [GET] "/api/v1/items"`
-This is because we haven't created our controller yet so let's create it! Keep in mind the namespacing we used to setup the test directory.
-`api/v1`
+This is because we haven't created a route yet. Without a route, when a user sends an HTTP request to `/api/v1/items` we haven't told our app how to handle that request. So let's create it! Keep in mind that we namespaced our API routes in the test directory under `api/v1`.
+
+```rb
+# config/routes.rb
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      get '/items', to: 'items#index'
+    end
+  end
+end
+```
+
+This should fix our previous error, so it's time to run rspec agian to chase down the next one.
+
+```sh
+ActionController::RoutingError: uninitialized constant Api
+```
+
+This tells us that our API request is looking for a controller called Api. A controller is just a special type of class located under `/app/controllers`. In our case it will be under `/app/controllers/api/v1`. So let's create it!
 
 ```sh
 $ mkdir -p app/controllers/api/v1
@@ -204,64 +208,66 @@ class Api::V1::ItemsController < ApplicationController
 end
 ```
 
-If we were to run our tests again, we should get the same error because we haven't setup the routing.
+Now we runout test again and get `The action 'index' could not be found for Api::V1::ItemsController`. An 'action' simply means a method within the controller. To that effect, when we directed our route in the routes file to `items#index` we call `items#index` a controller-action.
 
-```rb
-# config/routes.rb
-  namespace :api do
-    namespace :v1 do
-      resources :items, only: [:index]
-    end
-  end
-```
-
-Also, add the action in the controller:
+So let's add the index action to our controller and then run our test again.
 
 ```rb
 # app/controllers/api/v1/items_controller.rb
 class Api::V1::ItemsController < ApplicationController
-
   def index
   end
-
 end
 ```
 
-Great! We are successfully getting a response. But we aren't actually getting any data. Without any data or templates, Rails 5 API
-will respond with `Status 204 No Content`. Since it's a `2xx` status code, it is interpreted as a success.
+Great! We are successfully getting a response! But we aren't actually getting any data. Without any data or templates, Rails 5 API will respond with `Status 204 No Content`. Our test is requiring a 200 status code.
 
 Now lets see if we can actually get some data.
+
+```rb
+# class Api::V1::ItemsController < ApplicationController
+class Api::V1::ItemsController < ApplicationController
+  def index
+    render plain: 'Hello World!'
+  end
+end
+```
+
+Run rspec again and ... we have a passing test!
+
+Now let's fill in our test to make sure we're retuning what we actually want from our API.
 
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
 require 'rails_helper'
 
-describe "Items API" do
-  it "sends a list of items" do
-     create_list(:item, 3)
+RSpec.describe "Items API", type: :request do
+  it "index: returns a list of all items" do
+    3.times do |n|
+      Item.create(name: "Item_#{n}", description: "Description of item #{n}")
+    end
 
-      get '/api/v1/items'
+    get '/api/v1/items'
+    items = JSON.parse(response.body)
 
-      expect(response).to be_success
-
-      items = JSON.parse(response.body)
-   end
+    expect(response).to have_http_status(200)
+    expect(items.count).to eq(3)
+    expect(items.first.name).to eq('Item_0')
+    expect(items.last.description).to eq('Description of item 2')
+  end
 end
 ```
 
-When we run our tests again, we get a semi-obnoxious error of `JSON::ParserError: A JSON text must at least contain two octets!`.
-This just means that we need open and closing braces for it to actually be JSON. Either `[]` or `{}`
+When we run our tests again, we get a `JSON::ParserError`. This just means that the data we returned is not formatted as JSON.
 
-Well that makes sense. We aren't actually rendering anything yet. Let's render some JSON from our controller.
+Let's render some JSON from our controller.
 
 ```rb
 # app/controllers/api/v1/items_controller.rb
 class Api::V1::ItemsController < ApplicationController
-
   def index
     render json: Item.all
   end
-
 end
 ```
 
