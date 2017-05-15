@@ -26,17 +26,18 @@ If the output is something like `Rails 5.x.x` then you're good to go.
 
 * Understand how an internal API works at a conceptual level
   * Q: What is an API in the context of web development?
-    * A: At the most basic level an API wraps a database and provides it's users to interface with the database via HTTP requests
+  * A: At the most basic level an API wraps a database and provides it's users to interface with the database via HTTP requests
   * Q: Why might we decide to expose information in a database we control through an API?
-    * A: To save the user the headache of making database calls directly
+  * A: To save the user the headache of making database calls directly
 * Understand what it means to build a CRUD app and why that is significant
 * Understand the 7 restful routes and the 5 we will use to build an API
   * Write out the [7 restful routes](http://guides.rubyonrails.org/routing.html#crud-verbs-and-actions) and discuss the relationship with CRUD
+* Understand how to create a Postgres database, add items to it, retrieve items from it, update items, and destroy items. This corresponds to the Create, Read, Update, & Destroy CRUD acronym.
 * Understand the MVC Architecture and why we don't need the View component in an API
 * Build our app via test driven development (TDD), by creating request specs to cover an internal API
 * Feel comfortable writing request specs that deal with different HTTP verbs (GET, POST, PUT, DELETE)
   * Q: What do we need to test in an API?
-    * A: We need one test for each API endpoint we expose to the users
+  * A: We need one test for each API endpoint we expose to the users
 
 ## Warmup with a 10 minute blog
 
@@ -50,7 +51,7 @@ $ cd blog
 $ rails db:create
 ```
 
-Now we can really lean into the magic of rails by using its scaffold generator to build a CRUD app where the resource is a blog post. Following that we will send the command to add our blog posts table to our database.
+Now we can really lean into the magic of rails by using its scaffold generator to build a CRUD app. Our 'resource' will be a blog post. Following that we will run the migrate command to add our blog posts table to our database.
 
 ```sh
 $ rails generate scaffold Post name:string title:string content:text
@@ -67,7 +68,7 @@ Now change directories out of this project, delete it if you like and let's get 
 
 ### Overview
 
-By the time we finish we will have written a test for each of the 5 restul routes that apply to an API and well have built out the 5 endpoints to make each test pass. Our endpoints will be:
+By the time we finish we will have written a test for each of the 5 restul routes that apply to an API and will have built out the 5 endpoints to make each test pass. Our endpoints will be:
 
 * Api::V1::ItemsController#index
 * Api::V1::ItemsController#show
@@ -117,7 +118,7 @@ Note that we are namespacing under `/api/v1`, which is a best practice when crea
 
 Note also that we are deciding to use 'items' as the resource that our API is serving up. You can really use any noun that would make sense to store in a database, e.g. users, photos, blog posts, restaurant reviews, et cetera.
 
-On the first line of our test, we want to set up our data. We'll create a few items in our database that we can then request back via our API. We then want to make the request that a user would be making. We want a `get` request to `api/v1/items` and we would like to get json back. At the end of the test we want to assert that the response was a success.
+At the beginning of our test, we want to set up our data. We'll create a few items in our database that we can then request back via our API. We then want to make the request that a user would be making. We want a `get` request to `api/v1/items` and we would like to get json back. At the end of the test we want to assert that the response was a success.
 
 ```rb
 # spec/requests/api/v1/items_request_specs_spec.rb
@@ -138,7 +139,7 @@ end
 
 This is a very basic test, that only tests that we get something/anything back from the API call. Well fill in the test more when this part is passing.
 
-### 2. Creating Our First Model, Migration, and Factory
+### 2. Creating Our First Model & Migration
 
 Let's make the test pass!
 
@@ -149,7 +150,7 @@ Failure/Error: Item.create(name: "Item_#{n}", description: "Description of item 
 NameError: uninitialized constant Item
 ```
 
-This is because we have not created a our Item model yet. Rails gives us a generator to create the migration that we'll use to add the model table to the database.
+This is because we have not created a our Item model yet. Rails gives us a generator to create the model and the migration that we'll use to add the model table to the database.
 
 Let's generate a model.
 
@@ -169,12 +170,12 @@ $ rails db:migrate
 == 20160229180616 CreateItems: migrated (0.0413s) =============================
 ```
 
-### 3. Api::V1::ItemsController#index
+### 3. Controller#Action - Api::V1::ItemsController#index
 
 The rule with TDD is to make the smallest change that will fix the current error and then run the tests again ... rince and repeat. So let's run `$ rspec` again.
 
 We should get the error `ActionController::RoutingError: No route matches [GET] "/api/v1/items"`
-This is because we haven't created a route yet. Without a route, when a user sends an HTTP request to `/api/v1/items` we haven't told our app how to handle that request. So let's create it! Keep in mind that we namespaced our API routes in the test directory under `api/v1`.
+This is because we haven't created a route yet. Without a route, when a user sends an HTTP request to `/api/v1/items` we haven't told our app how to handle that request. So let's create the route! Keep in mind that we namespaced our API routes in the test directory under `api/v1`.
 
 ```rb
 # config/routes.rb
@@ -193,7 +194,7 @@ This should fix our previous error, so it's time to run rspec agian to chase dow
 ActionController::RoutingError: uninitialized constant Api
 ```
 
-This tells us that our API request is looking for a controller called Api. A controller is just a special type of class located under `/app/controllers`. In our case it will be under `/app/controllers/api/v1`. So let's create it!
+This tells us that our API request is looking for a controller called Api. A controller is just a special type of class located under `/app/controllers`. In our case it will be under `/app/controllers/api/v1`. So let's create the controller!
 
 ```sh
 $ mkdir -p app/controllers/api/v1
@@ -208,7 +209,7 @@ class Api::V1::ItemsController < ApplicationController
 end
 ```
 
-Now we runout test again and get `The action 'index' could not be found for Api::V1::ItemsController`. An 'action' simply means a method within the controller. To that effect, when we directed our route in the routes file to `items#index` we call `items#index` a controller-action.
+Now we run our test again and get `The action 'index' could not be found for Api::V1::ItemsController`. An 'action' simply means a method within the controller. To that effect, when we directed our route in the routes file to `items#index` we call `items#index` a controller-action.
 
 So let's add the index action to our controller and then run our test again.
 
@@ -248,12 +249,12 @@ RSpec.describe "Items API", type: :request do
     end
 
     get '/api/v1/items'
-    items = JSON.parse(response.body)
+    items_response = JSON.parse(response.body)
 
     expect(response).to have_http_status(200)
-    expect(items.count).to eq(3)
-    expect(items.first.name).to eq('Item_0')
-    expect(items.last.description).to eq('Description of item 2')
+    expect(items_response.count).to eq(3)
+    expect(items_response.first['name']).to eq('Item_0')
+    expect(items_response.last['description']).to eq('Description of item 2')
   end
 end
 ```
@@ -271,59 +272,42 @@ class Api::V1::ItemsController < ApplicationController
 end
 ```
 
-And... our test is passing again.
+And ... our test is passing again!
 
-Let's take a closer look at the response. Put a pry on line eight in the test, right below where we make the request.
+Let's take a closer look at the response. Put a pry on line ten in the test, right below where we make the request.
 
-If you just type `response` you can take a look at the entire response object. We care about the response body. If you enter `response.body` you can see the data that is returned from the endpoint. We are getting back two items that we never created - this is data served from fixtures. Please feel free to edit the data in the fixtures file as you see fit.
+If you just type `response` you can take a look at the entire response object. We care about the response body. If you enter `response.body` you can see the data that is returned from the endpoint.
 
-The data we got back is json, and we need to parse it to get a Ruby object. Try entering `JSON.parse(response.body)`. As you see, the data looks a lot more like Ruby after we parse it. Now that we have a Ruby object, we can make assertions about it.
+The data we got back is json, and we need to parse it to get a Ruby object. Try entering `JSON.parse(response.body)`. As you see, the data looks a lot more like Ruby after we parse it. Now that we have a Ruby object, the assertions we made about it are passing.
 
-```rb
-# spec/requests/api/v1/items_request_spec.rb
-require 'rails_helper'
-
-describe "Items API" do
-  it "sends a list of items" do
-    create_list(:item, 3)
-
-    get "/api/v1/items"
-
-    expect(response).to be_success
-
-    items = JSON.parse(response.body)
-
-    expect(items.count).to eq(3)
-  end
-end
-```
-
-Run your tests again and they should still be passing.
-
-### 4. ItemsController#show
+### 4. Controller#Action - Api::V1::ItemsController#show
 
 Now we are going to test drive the `/api/v1/items/:id` endpoint. From the `show` action, we want to return a single item.
 
-First, let's write the test. As you can see, we have added a key `id` in the request:
+First, let's write a second test within the same feature. As you can see, we have added a key `id` in the request:
 
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
-  it "can get one item by its id" do
-    id = create(:item).id
+it 'show: returns a single item by id' do
+  item = Item.create(name: 'Flux Capacitor',
+                     description: 'Time travel device running on plutonium')
+  id = item.id
 
-    get "/api/v1/items/#{id}"
+  get "/api/v1/items/#{id}"
+  item_response = JSON.parse(response.body)
 
-    item = JSON.parse(response.body)
-
-    expect(response).to be_success
-    expect(item["id"]).to eq(id)
-  end
+  expect(response).to have_http_status(200)
+  expect(item_response['id']).to eq(id)
+  expect(item_response['name']).to eq('Flux Capacitor')
+end
 ```
 
-Try to test drive the implementation before looking at the code below.
----
+Try to test drive the implementation before looking at the code below. Remember the pattern:
+1. Run the test & get a failure message.
+2. Fix the smallest thing in the code to fix the immediate error.
+3. Repeat steps 1 & 2 until the test is passing.
 
-Run the tests and the first error we get is: `ActionController::RoutingError: No route matches [GET] "/api/v1/items/980190962"`, or some other similar route. Factory Girl has created an id for us.
+Run the tests and the first error we get is: `ActionController::RoutingError: No route matches [GET] "/api/v1/items/[some_number]"`.
 
 Let's update our routes.
 
@@ -331,7 +315,8 @@ Let's update our routes.
 # config/routes.rb
 namespace :api do
   namespace :v1 do
-    resources :items, only: [:index, :show]
+    get '/items',     to: 'items#index'
+    get '/items/:id', to: 'items#show'
   end
 end
 ```
@@ -341,26 +326,34 @@ Run the tests and... `The action 'show' could not be found for Api::V1::ItemsCon
 Add the action and declare what data should be returned from the endpoint:
 
 ```rb
-def show
-  render json: Item.find(params[:id])
+# app/controllers/api/v1/items_controller.rb
+class Api::V1::ItemsController < ApplicationController
+  def index
+    render json: Item.all
+  end
+
+  def show
+    render json: Item.find(params[:id])
+  end
 end
 ```
 
-Run the tests and... we should have two passing tests.
+Run the tests and... we should have two passing tests. If you want a better understanding of the `params` variable, throw a pry in on the line after `def show` and play around with it.
 
-### 5. ItemsController#create
+### 5. Controller#Action - Api::V1::ItemsController#create
 
-Let's start with the test. Since we are creating a new item, we need to pass data for the new item via the HTTP request.
-We can do this easily by adding the params as a key-value pair. Also note that we swapped out the `get` in the request for a `post` since we are creating data.
+At this point we've created 2 of the 5 restful routes (index & show are done, create, update, & destroy are left). Since the setup took a while I'd say we're at least halfway done.
+
+For 'create', let's start with the test. Since we are creating a new item, we need to pass data for the new item via the HTTP request. We can do this easily by adding the params as a key-value pair. Also note that we swapped out the `get` in the request for a `post` since we are creating data.
 
 Also note that we aren't parsing the response to access the last item we created, we can simply query for the last Item record created.
 
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
-it "can create a new item" do
-  item_params = { name: "Saw", description: "I want to play a game" }
+it 'create: creates a new item' do
+  item_params = { name: 'Post Holer', description: 'It\'s for digging holes ... for posts' }
 
-  post "/api/v1/items", params: {item: item_params}
+  post '/api/v1/items', params: item_params
   item = Item.last
 
   assert_response :success
@@ -371,16 +364,20 @@ end
 
 Run the test and you should get `ActionController::RoutingError:No route matches [POST] "/api/v1/items"`
 
-First, we need to add the route and the action.
+First, we need to add the route.
 
 ```rb
 # config/routes.rb
 namespace :api do
   namespace :v1 do
-    resources :items, only: [:index, :show, :create]
+    get  '/items',     to: 'items#index'
+    get  '/items/:id', to: 'items#show'
+    post '/items',     to: 'items#create'
   end
 end
 ```
+
+The next error should look familiar by now and should indicate that `The action 'create' could not be found for Api::V1::ItemsController`. So we need to add the create action (method) to the ItemsController.
 
 ```rb
 # app/controllers/api/v1/items_controller.rb
@@ -390,24 +387,19 @@ end
 
 Run the tests... and the test fails. You should get `NoMethodError: undefined method 'name' for nil:NilClass`. That's because we aren't actually creating anything yet.
 
-We are going to create an item with the incoming params. Let's take advantage of all the niceties Rails gives us and use strong params.
+We are going to create an item with the incoming params. Again, I find it helpful to throw a debugger (read: pry) in after `def create` and look closer at the `params` variable to get a better understanding.
 
 ```rb
 # app/controllers/api/v1/items_controller.rb
 def create
-  render json: Item.create(item_params)
+  item = Item.create(name: params[:name], description: params[:description])
+  render json: item
 end
-
-private
-
-  def item_params
-    params.require(:item).permit(:name, :description)
-  end
 ```
 
 Run the tests and we should have 3 passing tests.
 
-### 6. Api::V1::ItemsController#update
+### 6. Controller#Action - Api::V1::ItemsController#update
 
 Like before, let's add a test.
 
@@ -415,17 +407,17 @@ This test looks very similar to the previous one we wrote. Note that we aren't m
 
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
-it "can update an existing item" do
-  id = create(:item).id
+it "update: updates an existing item" do
+  id = Item.create(name: 'Caterpillar', description: 'Turns into a butterfly').id
   previous_name = Item.last.name
-  item_params = { name: "Sledge" }
+  item_params = { name: 'Butterfly' }
 
-  put "/api/v1/items/#{id}", params: {item: item_params}
-  item = Item.find_by(id: id)
+  put "/api/v1/items/#{id}", params: item_params
+  item = Item.find(id)
 
   expect(response).to be_success
   expect(item.name).to_not eq(previous_name)
-  expect(item.name).to eq("Sledge")
+  expect(item.name).to eq('Butterfly')
 end
 ```
 
@@ -436,7 +428,10 @@ Try to test drive the implementation before looking at the code below.
 # config/routes.rb
 namespace :api do
   namespace :v1 do
-    resources :items, only: [:index, :show, :create, :update]
+    get  '/items',     to: 'items#index'
+    get  '/items/:id', to: 'items#show'
+    post '/items',     to: 'items#create'
+    put  '/items/:id', to: 'items#update'
   end
 end
 ```
@@ -444,11 +439,12 @@ end
 ```rb
 # app/controllers/api/v1/items_controller.rb
 def update
-  render json: Item.update(params[:id], item_params)
+  item = Item.update(params[:id], name: params[:name])
+  render json: item
 end
 ```
 
-### 7. Api::V1::ItemsController#destroy
+### 7. Controller#Action - Api::V1::ItemsController#destroy
 
 Ok, last endpoint to test and implement: destroy!
 
@@ -456,31 +452,17 @@ In this test, the last line in this test is refuting the existence of the item w
 
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
-it "can destroy an item" do
-  item = create(:item)
+it "destroy: can destroy an item" do
+  item = Item.create(name: 'Something Clever', description: 'I\'m all out of ideas')
 
-  expect(Item.count).to eq(1)
-
-  delete "/api/v1/items/#{item.id}"
-
-  expect(response).to be_success
-  expect(Item.count).to eq(0)
-  expect{Item.find(item.id)}.to raise_error(ActiveRecord::RecordNotFound)
-end
-```
-
-We can also use RSpec's [expect change](https://www.relishapp.com/rspec/rspec-expectations/v/2-0/docs/matchers/expect-change) method as an extra check. In our case, `change` will check that the numeric difference of `Item.count` before and after the block is run is `-1`.
-
-```rb
-it "can destroy an item" do
-  item = create(:item)
-
-  expect{delete "/api/v1/items/#{item.id}"}.to change(Item, :count).by(-1)
+  expect{ delete "/api/v1/items/#{item.id}" }.to change{ Item.count }.from(1).to(0)
 
   expect(response).to be_success
   expect{Item.find(item.id)}.to raise_error(ActiveRecord::RecordNotFound)
 end
 ```
+
+You can read about RSpec's [expect change matcher here](https://www.relishapp.com/rspec/rspec-expectations/v/2-0/docs/matchers/expect-change). In our case, `change` will verify the numeric value of `Item.count` before and after the block is run.
 
 Make the test pass.
 ---
@@ -489,7 +471,11 @@ Make the test pass.
 # config/routes.rb
 namespace :api do
   namespace :v1 do
-    resources :items, except: [:new, :edit]
+    get    '/items',     to: 'items#index'
+    get    '/items/:id', to: 'items#show'
+    post   '/items',     to: 'items#create'
+    put    '/items/:id', to: 'items#update'
+    delete '/items/:id', to: 'items#destroy'
   end
 end
 ```
@@ -497,7 +483,7 @@ end
 ```rb
 # app/controllers/api/v1/items_controller.rb
 def destroy
-  Item.delete(params[:id])
+  Item.destroy(params[:id])
 end
 ```
 
