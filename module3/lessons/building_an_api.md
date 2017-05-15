@@ -6,7 +6,7 @@ length: 90
 tags: apis, testing, requests, rails
 ---
 
-### Install Rails
+## Install Rails
 
 Rails can take a while to install, so if you haven't already let's get this going first.
 
@@ -87,7 +87,7 @@ By the time we finish we will have written a test for each of the 5 restul route
 * `render`: tells your controller what to render as a response
 * `json: Item.all`: hash argument for render - converts Item.all to valid JSON
 
-### 0. RSpec Setup
+## 0. RSpec Setup
 
 Let's start by creating a new Rails project. If you are creating an api only Rails project, you can append `--api` to your rails new line in the command line.
 Read [section 3 of the docs](http://edgeguides.rubyonrails.org/api_app.html) if you want to see how an api-only rails project is configured.
@@ -105,7 +105,7 @@ $ bundle
 $ rails g rspec:install
 ```
 
-### 1. Creating Our First Test
+## 1. Creating Our First Test
 
 Now that our configuration is set up, we can start test driving our code. First, let's set up the test file. In true TDD form, we need to create the structure of the test folders ourselves. Even though we are going to be creating controller files for our api, users are going to be sending HTTP requests to our app. For this reason, we are going to call these specs `requests` instead of `controller specs`. Let's create our folder structure.
 
@@ -139,7 +139,7 @@ end
 
 This is a very basic test, that only tests that we get something/anything back from the API call. Well fill in the test more when this part is passing.
 
-### 2. Creating Our First Model & Migration
+## 2. Creating Our First Model & Migration
 
 Let's make the test pass!
 
@@ -170,7 +170,7 @@ $ rails db:migrate
 == 20160229180616 CreateItems: migrated (0.0413s) =============================
 ```
 
-### 3. Controller#Action - Api::V1::ItemsController#index
+## 3. Controller#Action - Api::V1::ItemsController#index
 
 The rule with TDD is to make the smallest change that will fix the current error and then run the tests again ... rince and repeat. So let's run `$ rspec` again.
 
@@ -280,7 +280,33 @@ If you just type `response` you can take a look at the entire response object. W
 
 The data we got back is json, and we need to parse it to get a Ruby object. Try entering `JSON.parse(response.body)`. As you see, the data looks a lot more like Ruby after we parse it. Now that we have a Ruby object, the assertions we made about it are passing.
 
-### 4. Controller#Action - Api::V1::ItemsController#show
+### Hitting our API endpoint in development
+
+Okay, so we've built an API endpoint and we know it's working in our test environment. Let's make sure it works when the rubber meets the road by trying to hit it on the development environment. First, jump into the Rails console and add a few items to the database. Then spin up your Rails server to expose the endpoint we created.
+
+```sh
+$ rails console
+```
+
+```rb
+[1] pry(main)> 3.times do |n|
+[1] pry(main)*   Item.create(name: "Item_#{n}", description: "Description of item #{n}")
+[1] pry(main)* end
+[2] pry(main)> Item.count # => 3
+[3] pry(main)> exit
+```
+
+```sh
+$ rails server
+```
+
+Now point your browser to [http://localhost:3000/api/v1/items](http://localhost:3000/api/v1/items) and you should see your three items with their descriptions. If you want to see the output in a more organized format, I recommend installing a browser extension to take care of that. I use [JSONView](https://chrome.google.com/webstore/detail/jsonview/chklaanhfefbnpoihckbnefhakgolnmc) for Chrome and am pretty happy with it.
+
+Make note that the nature of this transaction requires both a client and a server. In this case your computer is playing both roles. Your terminal is providing the server that anyone (who can connect to it) can make a request from. Then your browser is sending a request to the server and the server returns the information requested by the browser.
+
+Now we're ready to move on to the next route: show.
+
+## 4. Controller#Action - Api::V1::ItemsController#show
 
 Now we are going to test drive the `/api/v1/items/:id` endpoint. From the `show` action, we want to return a single item.
 
@@ -340,7 +366,13 @@ end
 
 Run the tests and... we should have two passing tests. If you want a better understanding of the `params` variable, throw a pry in on the line after `def show` and play around with it.
 
-### 5. Controller#Action - Api::V1::ItemsController#create
+### Hitting our API endpoint in development
+
+To hit our new endpoint in the development environment the only difference is to add a number to the end of the url. First, to find out what index numbers were assigned in your database, jump into `rails console` and run `Item.all` to view the ids of the items you created before (this will likely just be 1, 2, & 3). Then point your browser at [http://localhost:3000/api/v1/items/1](http://localhost:3000/api/v1/items/1). Your API should return just the one item this time.
+
+Now let's step it up a notch and move from GET requests to a POST request.
+
+## 5. Controller#Action - Api::V1::ItemsController#create
 
 At this point we've created 2 of the 5 restful routes (index & show are done, create, update, & destroy are left). Since the setup took a while I'd say we're at least halfway done.
 
@@ -399,7 +431,7 @@ end
 
 Run the tests and we should have 3 passing tests.
 
-### 6. Controller#Action - Api::V1::ItemsController#update
+## 6. Controller#Action - Api::V1::ItemsController#update
 
 Like before, let's add a test.
 
@@ -444,7 +476,7 @@ def update
 end
 ```
 
-### 7. Controller#Action - Api::V1::ItemsController#destroy
+## 7. Controller#Action - Api::V1::ItemsController#destroy
 
 Ok, last endpoint to test and implement: destroy!
 
@@ -453,7 +485,7 @@ In this test, the last line in this test is refuting the existence of the item w
 ```rb
 # spec/requests/api/v1/items_request_spec.rb
 it "destroy: can destroy an item" do
-  item = Item.create(name: 'Something Clever', description: 'I\'m all out of ideas')
+  item = Item.create(name: 'Death Star', description: "That's no moon ... It's a space station")
 
   expect{ delete "/api/v1/items/#{item.id}" }.to change{ Item.count }.from(1).to(0)
 
