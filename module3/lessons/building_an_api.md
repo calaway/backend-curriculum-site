@@ -280,6 +280,7 @@ If you just type `response` you can take a look at the entire response object. W
 
 The data we got back is json, and we need to parse it to get a Ruby object. Try entering `JSON.parse(response.body)`. As you see, the data looks a lot more like Ruby after we parse it. Now that we have a Ruby object, the assertions we made about it are passing.
 
+---
 ### Hitting our API endpoint in development
 
 Okay, so we've built an API endpoint and we know it's working in our test environment. Let's make sure it works when the rubber meets the road by trying to hit it on the development environment. First, jump into the Rails console and add a few items to the database. Then spin up your Rails server to expose the endpoint we created.
@@ -302,10 +303,38 @@ $ rails server
 
 Now point your browser to [http://localhost:3000/api/v1/items](http://localhost:3000/api/v1/items) and you should see your three items with their descriptions. If you want to see the output in a more organized format, I recommend installing a browser extension to take care of that. I use [JSONView](https://chrome.google.com/webstore/detail/jsonview/chklaanhfefbnpoihckbnefhakgolnmc) for Chrome and am pretty happy with it.
 
+My output looks like this:
+```json
+[
+  {
+    "id": 1,
+    "name": "Item_0",
+    "description": "Description of item 0",
+    "created_at": "2017-05-15T23:23:58.475Z",
+    "updated_at": "2017-05-15T23:23:58.475Z"
+  },
+  {
+    "id": 2,
+    "name": "Item_1",
+    "description": "Description of item 1",
+    "created_at": "2017-05-15T23:23:58.484Z",
+    "updated_at": "2017-05-15T23:23:58.484Z"
+  },
+  {
+    "id": 3,
+    "name": "Item_2",
+    "description": "Description of item 2",
+    "created_at": "2017-05-15T23:23:58.486Z",
+    "updated_at": "2017-05-15T23:23:58.486Z"
+  }
+]
+```
+
 Make note that the nature of this transaction requires both a client and a server. In this case your computer is playing both roles. Your terminal is providing the server that anyone (who can connect to it) can make a request from. Then your browser is sending a request to the server and the server returns the information requested by the browser.
 
 Now we're ready to move on to the next route: show.
 
+---
 ## 4. Controller#Action - Api::V1::ItemsController#show
 
 Now we are going to test drive the `/api/v1/items/:id` endpoint. From the `show` action, we want to return a single item.
@@ -370,8 +399,20 @@ Run the tests and... we should have two passing tests. If you want a better unde
 
 To hit our new endpoint in the development environment the only difference is to add a number to the end of the url. First, to find out what index numbers were assigned in your database, jump into `rails console` and run `Item.all` to view the ids of the items you created before (this will likely just be 1, 2, & 3). Then point your browser at [http://localhost:3000/api/v1/items/1](http://localhost:3000/api/v1/items/1). Your API should return just the one item this time.
 
+My output looks like this:
+```json
+{
+  "id": 1,
+  "name": "Item_0",
+  "description": "Description of item 0",
+  "created_at": "2017-05-15T23:23:58.475Z",
+  "updated_at": "2017-05-15T23:23:58.475Z"
+}
+```
+
 Now let's step it up a notch and move from GET requests to a POST request.
 
+---
 ## 5. Controller#Action - Api::V1::ItemsController#create
 
 At this point we've created 2 of the 5 restful routes (index & show are done, create, update, & destroy are left). Since the setup took a while I'd say we're at least halfway done.
@@ -431,6 +472,7 @@ end
 
 Run the tests and we should have 3 passing tests.
 
+---
 ### Hitting our API endpoint in development
 
 This one is going to be a bit trickier to hit in dev, because a browser is only going to send GET requests and we need to send a POST request. An awesome free tool to do this with is [Postman](https://www.getpostman.com/). Either download the desktop version or just the Chrome extension and fire it up. It may look like you need to create an account to use it, but you can just skip that part.
@@ -500,6 +542,7 @@ def update
 end
 ```
 
+---
 ### Hitting our API endpoint in development
 
 Can you hit our update endpoint in Postman? What HTTP verb do you need to specify? What URL do you point it at? What params do you need to send with it?
@@ -547,9 +590,14 @@ def destroy
 end
 ```
 
+---
 ### Hitting our API endpoint in development
 
 Now try deleting one of your dev environment items via our API with Postman. What HTTP verb do you need to specify? What URL do you point it at? What params do you need to send with it?
+
+Question: Did you get a return value back? Why or why not? Did you get a status code? What was it? If you sent the same request a second time does the status code change? Does the return value change?
+
+---
 
 Pat yourself on the back. You just built an API. And with TDD. Huzzah! Now go call a friend and tell them how cool you are.
 
