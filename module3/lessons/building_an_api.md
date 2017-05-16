@@ -519,8 +519,7 @@ it "update: updates an existing item" do
 end
 ```
 
-Try to test drive the implementation before looking at the code below.
----
+### Try to test drive the implementation before looking at the code below.
 
 ```rb
 # config/routes.rb
