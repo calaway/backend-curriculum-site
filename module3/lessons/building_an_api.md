@@ -6,15 +6,16 @@ length: 90
 tags: apis, testing, requests, rails
 ---
 
-## Install Rails
+## Install Rails & Postgres
 
-Rails can take a while to install, so if you haven't already let's get this going first.
+Rails & Postgres can take a while to install, so if you haven't already let's get this going first.
 
 ```sh
 $ gem install rails
+$ brew install postgresql
 ```
 
-You can confirm it installed correctly by running
+You can confirm Rails installed correctly by running
 
 ```sh
 $ rails --version
