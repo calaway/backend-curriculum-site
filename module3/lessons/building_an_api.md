@@ -603,7 +603,4 @@ Pat yourself on the back. You just built an API. And with TDD. Huzzah! Now go ca
 
 ## Supporting Materials
 
-* [Notes](https://www.dropbox.com/s/zxftnls0at2eqtc/Turing%20-%20Testing%20an%20Internal%20API%20%28Notes%29.pages?dl=0)
-* [Getting started with Factory Girl](https://github.com/thoughtbot/factory_girl/blob/master/GETTING_STARTED.md)
-* [Use Factory Girl's Build Stubbed for a Faster Test](https://robots.thoughtbot.com/use-factory-girls-build-stubbed-for-a-faster-test)
 * [Building an Internal API Short Tutorial](https://vimeo.com/185342639)
